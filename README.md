@@ -1,6 +1,7 @@
 # Python Wordle
 
-This is replica of wordle but made in Python
+This is replica of wordle but made in Python \n
+
 By Sam Chandler
 
 # Running
