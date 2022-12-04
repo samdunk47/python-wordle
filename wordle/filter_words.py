@@ -12,7 +12,7 @@ def filter_words_func():
                 valid = False
             index += 1
         if len(word) == 6 and valid:
-            five_letter_words_file.write(word.lower())
+            five_letter_words_file.write(word.upper())
     all_words_file.close()
     five_letter_words_file.close()
         
