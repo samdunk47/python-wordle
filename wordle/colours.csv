@@ -1,0 +1,14 @@
+text,#ffffff
+
+letter_correct,#538d4e
+letter_present,#b59f3b
+letter_absent,#3a3a3c
+letter_border,#3a3a3c
+
+keyboard_background,#818384
+keyboard_correct,#538d4e
+keyboard_present,#b59f3b
+keyboard_absent,#3a3a3c
+
+content_background,#121213
+
