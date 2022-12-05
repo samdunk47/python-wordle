@@ -1,6 +1,9 @@
 import wordle
 import pygame
 import sys
+import itertools
+import pprint
+from string import ascii_uppercase
 
 # wordle.filter_words_func() # only use if 5 letter word list does not already exist and contain correct words
 
@@ -18,11 +21,11 @@ class Game():
         self.fps_clock = pygame.time.Clock()
         self.FPS = 60
         self.fonts = {
-            "bold": pygame.font.SysFont("wordle/assets/ClearSans-Bold.ttf", 100),
-            "thin": pygame.font.SysFont("wordle/assets/ClearSans-Thin.ttf", 100),
-            "light": pygame.font.SysFont("wordle/assets/ClearSans-Light.ttf", 100),
-            "medium": pygame.font.SysFont("wordle/assets/ClearSans-Medium.ttf", 100),
-            "regular": pygame.font.SysFont("wordle/assets/ClearSans-Bold.ttf", 100),
+            "bold": pygame.font.SysFont("wordle/assets/ClearSans-Bold.ttf", 75),
+            "thin": pygame.font.SysFont("wordle/assets/ClearSans-Thin.ttf", 75),
+            "light": pygame.font.SysFont("wordle/assets/ClearSans-Light.ttf", 75),
+            "medium": pygame.font.SysFont("wordle/assets/ClearSans-Medium.ttf", 75),
+            "regular": pygame.font.SysFont("wordle/assets/ClearSans-Bold.ttf", 75),
         } # all fonts
         
         self.colours = {
@@ -45,19 +48,24 @@ class Game():
         # self.text_text_rect.center = (self.window_width / 2, self.window_height / 2)
 
         self.all_words = []
-        self.history = []
-        self.current_words = [
-            [" ", " ", " ", " ", " ", False],
-            [" ", " ", " ", " ", " ", False],
-            [" ", " ", " ", " ", " ", False],
-            [" ", " ", " ", " ", " ", False],
-            [" ", " ", " ", " ", " ", False],
-            [" ", " ", " ", " ", " ", False],
-        ]
+        self.cell_size = 75
+        self.cell_gap = 5
+        self.top_gap = self.cell_size + (self.cell_gap * 5)
+        self.left_gap = ((self.cell_size * 5) + (self.cell_gap * 4)) / 2
+        
+        self.title_text = self.fonts["regular"].render("Wordle in Python", True, self.colours["text"])
+        self.title_text_rect = self.title_text.get_rect()
+        self.title_text_rect.center = (self.window_width / 2, 40)
+        
+        self.keyboard_letters = {}
         
         self.running = True
         
         self.add_words()
+        self.create_keyboard_letters()
+        self.create_cells()
+        self.initialise_letters()
+
         
         self.execute()
         
@@ -69,6 +77,67 @@ class Game():
     def logic(self) -> None:
         """ Controls the game logic """
         
+    def initialise_letters(self) -> None:
+        letters = {}
+        for letter in ascii_uppercase:
+            letter_text = self.fonts["bold"].render(letter, True, self.colours["text"])
+            letter_text_rect = letter_text.get_rect()
+            letters[letter] = [
+                self.fonts["bold"].render(letter, True, self.colours["text"]), 
+                letter_text_rect
+                ]
+        self.letters = letters
+    
+    def create_keyboard_letters(self) -> None:
+        """ Adds all letters to a data dictionary 
+        Letter states:
+        0: unused
+        1: absent
+        2: present
+        3: correct
+        """
+        for letter in ascii_uppercase:
+            self.keyboard_letters[letter] = 0
+        
+    def create_cells(self) -> None:
+        """ Creates data dictionary of all cells in the game """    
+
+        cells = []
+        rows = 6
+        columns = 5
+        
+        for i in range(rows):
+            column = []
+            for j in range(columns + 1):
+                if j == columns:
+                    column.append(False)
+                else:
+                    column.append({
+                        "id": f"{i}{j}", 
+                        "content": " ", 
+                        "state": " ", 
+                        "background_colour": None, 
+                        "x_pos": self.left_gap + (j * self.cell_size) + (j * self.cell_gap), 
+                        "y_pos": self.top_gap + (i * self.cell_size)+ (i * self.cell_gap),
+                        "rect": pygame.Rect(
+                                self.left_gap + (j * self.cell_size) + (j * self.cell_gap),
+                                self.top_gap + (i * self.cell_size) + (i * self.cell_gap),
+                                self.cell_size,
+                                self.cell_size
+                                )
+                    })
+            cells.append(column)
+            
+        self.cells = cells
+        
+        # [
+        #     [{"id": "00", "content": " ", "state": 0, "background_colour": " "}, {}, {}, {}, {}, False],
+        #     [{}, {}, {}, {}, {}, False],
+        #     [{}, {}, {}, {}, {}, False],
+        #     [{}, {}, {}, {}, {}, False],
+        #     [{}, {}, {}, {}, {}, False],
+        #     [{}, {}, {}, {}, {}, False],
+        # ]
     
     def execute(self) -> None:
         """ Controls while loop of game """
@@ -83,11 +152,17 @@ class Game():
     def render(self) -> None:
         """ Renders elements onto screen """
         
-        for i in range(5):
-            print(i)
-        
         self._display_surface.fill(self.colours["content_background"])
+        self._display_surface.blit(self.title_text, self.title_text_rect)
         
+        pygame.draw.line(self._display_surface, self.colours["text"], (0, self.cell_size), (self.window_width, self.cell_size), 1)
+        
+        for row in self.cells:
+            for cell in itertools.islice(row, 5):
+                pygame.draw.rect(self._display_surface, self.colours["letter_absent"], cell["rect"], 2)
+                if cell["content"] is not " ":
+                    text_center = 
+            
         # self._display_surface.blit(self.test_text, self.text_text_rect)
         
         pygame.display.update()
@@ -97,12 +172,23 @@ class Game():
         """ Handles events """
         if event.type == pygame.QUIT:
             self.quit()
+        if event.type == pygame.KEYDOWN:
+            # Enter : 13
+            # Backspace : 8
+
+            try:
+                character = chr(event.key).upper()
+                if character in ascii_uppercase:
+                    print(character)
+                    self.cells[0][0]["content"] = character
+            except ValueError as error:
+                pass
+            
     def quit(self) -> None:
         """ Exits pygame, then the program """
         pygame.quit()
         sys.exit(0)
-    
-        
+
 
 if __name__ == "__main__":
     game = Game()
