@@ -160,8 +160,8 @@ class Game():
         for row in self.cells:
             for cell in itertools.islice(row, 5):
                 pygame.draw.rect(self._display_surface, self.colours["letter_absent"], cell["rect"], 2)
-                if cell["content"] is not " ":
-                    text_center = 
+                if cell["content"] != " ":
+                    pass
             
         # self._display_surface.blit(self.test_text, self.text_text_rect)
         
