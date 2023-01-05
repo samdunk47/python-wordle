@@ -1,1 +1,0 @@
-from .filter_words import filter_words_func

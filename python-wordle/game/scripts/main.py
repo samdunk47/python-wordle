@@ -1,9 +1,8 @@
-import wordle
 import pygame
 import sys
 import itertools
-import pprint
-from string import ascii_uppercase
+
+from string import ascii_uppercase, ascii_letters
 
 # wordle.filter_words_func() # only use if 5 letter word list does not already exist and contain correct words
 
@@ -21,11 +20,11 @@ class Game():
         self.fps_clock = pygame.time.Clock()
         self.FPS = 60
         self.fonts = {
-            "bold": pygame.font.SysFont("wordle/assets/ClearSans-Bold.ttf", 75),
-            "thin": pygame.font.SysFont("wordle/assets/ClearSans-Thin.ttf", 75),
-            "light": pygame.font.SysFont("wordle/assets/ClearSans-Light.ttf", 75),
-            "medium": pygame.font.SysFont("wordle/assets/ClearSans-Medium.ttf", 75),
-            "regular": pygame.font.SysFont("wordle/assets/ClearSans-Bold.ttf", 75),
+            "bold": pygame.font.SysFont("python-wordle\\game\\assets\\ClearSans-Bold.ttf", 75),
+            "thin": pygame.font.SysFont("python-wordle\\game\\assets\\ClearSans-Thin.ttf", 75),
+            "light": pygame.font.SysFont("python-wordle\\game\\assets\\ClearSans-Light.ttf", 75),
+            "medium": pygame.font.SysFont("python-wordle\\game\\assets\\ClearSans-Medium.ttf", 75),
+            "regular": pygame.font.SysFont("python-wordle\\game\\assets\\ClearSans-Regular.ttf", 75),
         } # all fonts
         
         self.colours = {
@@ -70,8 +69,8 @@ class Game():
         self.execute()
         
     def add_words(self) -> None:
-        """ Add words to an array of words, stores in instance of class """
-        file = open("wordle/words/five_letter_words.txt", "r")
+        """ Add words to an array of words, stores in instance of class """        
+        file = open("python-wordle\\game\\assets\\five_letter_words.txt", "r")
         self.all_words = file.readlines()
     
     def logic(self) -> None:
@@ -189,6 +188,21 @@ class Game():
         pygame.quit()
         sys.exit(0)
 
+    def filter_words_func():
+        all_words_file = open("python-wordle\game\\assets\\words.txt", "r")
+        five_letter_words_file = open("python-wordle\\game\\assets\\five_letter_words.txt", "w")
+        all_words = all_words_file.readlines()
+        for word in all_words:
+            valid = True
+            index = 0
+            for letter in word:
+                if not str(letter) in ascii_letters and index < 5:
+                    valid = False
+                index += 1
+            if len(word) == 6 and valid:
+                five_letter_words_file.write(word.upper())
+        all_words_file.close()
+        five_letter_words_file.close()
 
 if __name__ == "__main__":
     game = Game()
