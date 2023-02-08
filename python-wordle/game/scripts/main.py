@@ -6,6 +6,16 @@ from string import ascii_uppercase, ascii_letters
 
 # wordle.filter_words_func() # only use if 5 letter word list does not already exist and contain correct words
 
+# What the cells array looks like: 
+# [
+#     [{"id": "00", "content": " ", "state": 0, "background_colour": " ", "rect": }, {}, {}, {}, {}, False],
+#     [{}, {}, {}, {}, {}, False],
+#     [{}, {}, {}, {}, {}, False],
+#     [{}, {}, {}, {}, {}, False],
+#     [{}, {}, {}, {}, {}, False],
+#     [{}, {}, {}, {}, {}, False],
+# ]
+
 class Game():
     """ Class to control the game """
     def __init__(self) -> None:
@@ -54,7 +64,7 @@ class Game():
         
         self.title_text = self.fonts["bold"].render("Wordle in Python", True, self.colours["text"])
         self.title_text_rect = self.title_text.get_rect()
-        self.title_text_rect.center = (self.window_width / 2, 40)
+        self.title_text_rect.center = (self.window_width // 2, 40)
         
         self.keyboard_letters = {}
         
@@ -125,16 +135,7 @@ class Game():
             cells.append(column)
             
         self.cells = cells
-        
-        # [
-        #     [{"id": "00", "content": " ", "state": 0, "background_colour": " "}, {}, {}, {}, {}, False],
-        #     [{}, {}, {}, {}, {}, False],
-        #     [{}, {}, {}, {}, {}, False],
-        #     [{}, {}, {}, {}, {}, False],
-        #     [{}, {}, {}, {}, {}, False],
-        #     [{}, {}, {}, {}, {}, False],
-        # ]
-    
+           
     def execute(self) -> None:
         """ Controls while loop of game """
         while self.running:
@@ -144,8 +145,7 @@ class Game():
             self.logic()
             self.render()
             self.fps_clock.tick(self.FPS)
-            
-            
+                       
     def render(self) -> None:
         """ Renders elements onto screen """
         
@@ -162,8 +162,7 @@ class Game():
             
         # self._display_surface.blit(self.test_text, self.text_text_rect)
         
-        pygame.display.update()
-        
+        pygame.display.update()  
         
     def on_event(self, event) -> None:
         """ Handles events """
