@@ -1,6 +1,7 @@
 import pygame
 import sys
 import itertools
+from pprint import pprint
 
 from string import ascii_uppercase, ascii_letters
 
@@ -62,6 +63,8 @@ class Game():
         self.top_gap = self.cell_size + (self.cell_gap * 5)
         self.left_gap = ((self.cell_size * 5) + (self.cell_gap * 4)) / 2
         
+        self.current_row = 0
+        
         self.title_text = self.fonts["bold"].render("Wordle in Python", True, self.colours["text"])
         self.title_text_rect = self.title_text.get_rect()
         self.title_text_rect.center = (self.window_width // 2, 40)
@@ -82,8 +85,6 @@ class Game():
         file = open("python-wordle\\game\\assets\\five_letter_words.txt", "r")
         self.all_words = file.readlines()
     
-    def logic(self) -> None:
-        """ Controls the game logic """
         
     def initialise_letters(self) -> None:
         letters = {}
@@ -123,7 +124,7 @@ class Game():
                     column.append({
                         "id": f"{i}{j}", 
                         "content": " ", 
-                        "state": " ", 
+                        "state": 0, 
                         "background_colour": None, 
                         "rect": pygame.Rect(
                                 self.left_gap + (j * self.cell_size) + (j * self.cell_gap),
@@ -142,7 +143,6 @@ class Game():
             for event in pygame.event.get():
                 self.on_event(event)
                     
-            self.logic()
             self.render()
             self.fps_clock.tick(self.FPS)
                        
@@ -158,11 +158,23 @@ class Game():
             for cell in itertools.islice(row, 5):
                 pygame.draw.rect(self._display_surface, self.colours["letter_absent"], cell["rect"], 2)
                 if cell["content"] != " ":
-                    print(cell["content"], cell["id"])
-            
+                    letter = cell["content"]
+                    letter_text = self.fonts["bold"].render(letter, True, self.colours["text"])
+                    letter_text_rect = letter_text.get_rect()
+                    letter_text_rect.center = ((cell["rect"][0] + (self.cell_size / 2)),
+                                               (cell["rect"][1] + (self.cell_size / 2)) - 5)
+                    self._display_surface.blit(letter_text, letter_text_rect)
+                    
         # self._display_surface.blit(self.test_text, self.text_text_rect)
         
         pygame.display.update()  
+        
+    def logic(self) -> None:
+        """ Controls the game logic """
+        for row in itertools.islice(self.cells, self.current_row, len(self.cells)):
+            if row[5] == True:
+                self.current_row += 1
+        
         
     def on_event(self, event) -> None:
         """ Handles events """
@@ -178,11 +190,21 @@ class Game():
                     cell_id_to_insert_letter = self.search_for_first_empty_cell()
                     for row in self.cells:
                         for cell in itertools.islice(row, 5):
-                            if cell["id"] == cell_id_to_insert_letter:
-                                cell["content"] = character
+                            if cell["id"] == cell_id_to_insert_letter and \
+                                int(cell["id"][0]) == self.current_row:
+                                
+
+                                    
+                                    cell["content"] = character
+                                    
 
             except ValueError as error:
                 pass
+            if event.key == 13 and self.cells[self.current_row][4]["content"] != " ":
+
+                self.cells[self.current_row][5] = True
+
+        self.logic()
 
     def search_for_first_empty_cell(self) -> str:
         for row in self.cells:
