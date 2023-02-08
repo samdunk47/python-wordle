@@ -20,11 +20,11 @@ class Game():
         self.fps_clock = pygame.time.Clock()
         self.FPS = 60
         self.fonts = {
-            "bold": pygame.font.SysFont("python-wordle\\game\\assets\\ClearSans-Bold.ttf", 75),
-            "thin": pygame.font.SysFont("python-wordle\\game\\assets\\ClearSans-Thin.ttf", 75),
-            "light": pygame.font.SysFont("python-wordle\\game\\assets\\ClearSans-Light.ttf", 75),
-            "medium": pygame.font.SysFont("python-wordle\\game\\assets\\ClearSans-Medium.ttf", 75),
-            "regular": pygame.font.SysFont("python-wordle\\game\\assets\\ClearSans-Regular.ttf", 75),
+            "bold": pygame.font.Font("python-wordle\\game\\assets\\ClearSans-Bold.ttf", 75),
+            "thin": pygame.font.Font("python-wordle\\game\\assets\\ClearSans-Thin.ttf", 75),
+            "light": pygame.font.Font("python-wordle\\game\\assets\\ClearSans-Light.ttf", 75),
+            "medium": pygame.font.Font("python-wordle\\game\\assets\\ClearSans-Medium.ttf", 75),
+            "regular": pygame.font.Font("python-wordle\\game\\assets\\ClearSans-Regular.ttf", 75),
         } # all fonts
         
         self.colours = {
@@ -52,7 +52,7 @@ class Game():
         self.top_gap = self.cell_size + (self.cell_gap * 5)
         self.left_gap = ((self.cell_size * 5) + (self.cell_gap * 4)) / 2
         
-        self.title_text = self.fonts["regular"].render("Wordle in Python", True, self.colours["text"])
+        self.title_text = self.fonts["bold"].render("Wordle in Python", True, self.colours["text"])
         self.title_text_rect = self.title_text.get_rect()
         self.title_text_rect.center = (self.window_width / 2, 40)
         
@@ -64,7 +64,6 @@ class Game():
         self.create_keyboard_letters()
         self.create_cells()
         self.initialise_letters()
-
         
         self.execute()
         
@@ -116,11 +115,9 @@ class Game():
                         "content": " ", 
                         "state": " ", 
                         "background_colour": None, 
-                        "x_pos": self.left_gap + (j * self.cell_size) + (j * self.cell_gap), 
-                        "y_pos": self.top_gap + (i * self.cell_size)+ (i * self.cell_gap),
                         "rect": pygame.Rect(
                                 self.left_gap + (j * self.cell_size) + (j * self.cell_gap),
-                                self.top_gap + (i * self.cell_size) + (i * self.cell_gap),
+                                self.top_gap + (i * self.cell_size) + (i * self.cell_gap) + 20,
                                 self.cell_size,
                                 self.cell_size
                                 )
@@ -148,19 +145,20 @@ class Game():
             self.render()
             self.fps_clock.tick(self.FPS)
             
+            
     def render(self) -> None:
         """ Renders elements onto screen """
         
         self._display_surface.fill(self.colours["content_background"])
         self._display_surface.blit(self.title_text, self.title_text_rect)
         
-        pygame.draw.line(self._display_surface, self.colours["text"], (0, self.cell_size), (self.window_width, self.cell_size), 1)
+        pygame.draw.line(self._display_surface, self.colours["text"], (0, self.cell_size + 15), (self.window_width, self.cell_size + 15), 1)
         
         for row in self.cells:
             for cell in itertools.islice(row, 5):
                 pygame.draw.rect(self._display_surface, self.colours["letter_absent"], cell["rect"], 2)
                 if cell["content"] != " ":
-                    pass
+                    print(cell["content"], cell["id"])
             
         # self._display_surface.blit(self.test_text, self.text_text_rect)
         
@@ -178,18 +176,29 @@ class Game():
             try:
                 character = chr(event.key).upper()
                 if character in ascii_uppercase:
-                    print(character)
-                    self.cells[0][0]["content"] = character
+                    cell_id_to_insert_letter = self.search_for_first_empty_cell()
+                    for row in self.cells:
+                        for cell in itertools.islice(row, 5):
+                            if cell["id"] == cell_id_to_insert_letter:
+                                cell["content"] = character
+
             except ValueError as error:
                 pass
-            
+
+    def search_for_first_empty_cell(self) -> str:
+        for row in self.cells:
+            for cell in itertools.islice(row, 5):
+                if cell["content"] == " ":
+                    return cell["id"]
+        return ""
+    
     def quit(self) -> None:
         """ Exits pygame, then the program """
         pygame.quit()
         sys.exit(0)
 
-    def filter_words_func():
-        all_words_file = open("python-wordle\game\\assets\\words.txt", "r")
+    def filter_words_func(self):
+        all_words_file = open("python-wordle\\game\\assets\\words.txt", "r")
         five_letter_words_file = open("python-wordle\\game\\assets\\five_letter_words.txt", "w")
         all_words = all_words_file.readlines()
         for word in all_words:
