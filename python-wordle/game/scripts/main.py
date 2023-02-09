@@ -1,6 +1,7 @@
 import pygame
 import sys
 import itertools
+from random import randint
 from pprint import pprint
 
 from string import ascii_uppercase, ascii_letters
@@ -58,12 +59,14 @@ class Game():
         # self.text_text_rect.center = (self.window_width / 2, self.window_height / 2)
 
         self.all_words = []
+        self.all_answer_words = []
         self.cell_size = 75
         self.cell_gap = 5
         self.top_gap = self.cell_size + (self.cell_gap * 5)
         self.left_gap = ((self.cell_size * 5) + (self.cell_gap * 4)) / 2
         
         self.current_row = 0
+        self.chosen_word = ""
         
         self.title_text = self.fonts["bold"].render("Wordle in Python", True, self.colours["text"])
         self.title_text_rect = self.title_text.get_rect()
@@ -78,12 +81,18 @@ class Game():
         self.create_cells()
         self.initialise_letters()
         
+        self.logic()
+        
         self.execute()
         
     def add_words(self) -> None:
         """ Add words to an array of words, stores in instance of class """        
-        file = open("python-wordle\\game\\assets\\five_letter_words.txt", "r")
-        self.all_words = file.readlines()
+        words_file = open("python-wordle\\game\\assets\\five_letter_words.txt", "r")
+        self.all_words = words_file.readlines()
+        
+        answer_words_file = open("python-wordle\\game\\assets\\answer_words.txt", "r")
+        self.all_answer_words = answer_words_file.readlines()
+        
     
         
     def initialise_letters(self) -> None:
@@ -171,6 +180,14 @@ class Game():
         
     def logic(self) -> None:
         """ Controls the game logic """
+        if self.chosen_word == "":
+            number_of_words = len(self.all_answer_words)
+            random_number = randint(0, number_of_words)
+            self.chosen_word = self.all_answer_words[random_number]
+            print(self.chosen_word)
+            
+        
+        
         for row in itertools.islice(self.cells, self.current_row, len(self.cells)):
             if row[5] == True:
                 self.current_row += 1
@@ -192,17 +209,25 @@ class Game():
                         for cell in itertools.islice(row, 5):
                             if cell["id"] == cell_id_to_insert_letter and \
                                 int(cell["id"][0]) == self.current_row:
-                                
-
-                                    
                                     cell["content"] = character
                                     
-
             except ValueError as error:
                 pass
             if event.key == 13 and self.cells[self.current_row][4]["content"] != " ":
-
                 self.cells[self.current_row][5] = True
+            if event.key == 8:
+                first_empty_cell = self.search_for_first_empty_cell()
+                recent_cell = str(first_empty_cell[0] + str((int(first_empty_cell[1]) - 1 )))
+                if len(recent_cell) > 2:
+                    new_cell = str(int(recent_cell[0]) - 1) + "4"
+                    recent_cell = new_cell
+                    
+                for row in self.cells:
+                    for cell in itertools.islice(row, 5):
+                        if cell["id"] == recent_cell and recent_cell[0] == str(self.current_row):
+                            cell["content"] = " "
+                            
+                            
 
         self.logic()
 
