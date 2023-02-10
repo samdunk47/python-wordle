@@ -37,15 +37,18 @@ class Game():
             "light": pygame.font.Font("python-wordle\\game\\assets\\ClearSans-Light.ttf", 75),
             "medium": pygame.font.Font("python-wordle\\game\\assets\\ClearSans-Medium.ttf", 75),
             "regular": pygame.font.Font("python-wordle\\game\\assets\\ClearSans-Regular.ttf", 75),
+            "large": pygame.font.Font("python-wordle\\game\\assets\\ClearSans-Bold.ttf", 150),
         } # all fonts
         
         self.colours = {
             "text": "#ffffff",
             "content_background": "#121213",
 
-            "letter_correct": "#538d4e",
-            "letter_present": "#b59f3b",
+            "letter_unused": "#121213",
             "letter_absent": "#3a3a3c",
+            "letter_present": "#b59f3b",
+            "letter_correct": "#538d4e",
+            
             "letter_border": "#3a3a3c",
 
             "keyboard_background": "#818384",
@@ -67,10 +70,20 @@ class Game():
         
         self.current_row = 0
         self.chosen_word = ""
+        self.won = False
+        self.lost = False
         
         self.title_text = self.fonts["bold"].render("Wordle in Python", True, self.colours["text"])
         self.title_text_rect = self.title_text.get_rect()
         self.title_text_rect.center = (self.window_width // 2, 40)
+        
+        self.won_text = self.fonts["large"].render("You won!", True, self.colours["letter_correct"])
+        self.won_text_rect = self.won_text.get_rect()
+        self.won_text_rect.center = (self.window_width // 2, 675)
+        
+        self.lost_text = self.fonts["large"].render("You lost!", True, self.colours["text"])
+        self.lost_text_rect = self.lost_text.get_rect()
+        self.lost_text_rect.center = (self.window_width // 2, 675)
         
         self.keyboard_letters = {}
         
@@ -87,10 +100,18 @@ class Game():
     def add_words(self) -> None:
         """ Add words to an array of words, stores in instance of class """        
         words_file = open("python-wordle\\game\\assets\\five_letter_words.txt", "r")
-        self.all_words = words_file.readlines()
-        
+        all_words_with_newlines = words_file.readlines()
+        all_words = []
+        for word in all_words_with_newlines:
+            all_words.append(word.replace("\n", ""))
+        self.all_words = all_words
+
         answer_words_file = open("python-wordle\\game\\assets\\answer_words.txt", "r")
-        self.all_answer_words = answer_words_file.readlines()
+        all_answer_words_with_newlines = answer_words_file.readlines()
+        all_answer_words = []
+        for word in all_answer_words_with_newlines:
+            all_answer_words.append(word.replace("\n", ""))
+        self.all_answer_words = all_answer_words
         
     def initialise_letters(self) -> None:
         letters = {}
@@ -150,6 +171,7 @@ class Game():
                 self.on_event(event)
                     
             self.render()
+            self.check_win()
             self.fps_clock.tick(self.FPS)
                        
     def render(self) -> None:
@@ -162,6 +184,7 @@ class Game():
         
         for row in self.cells:
             for cell in islice(row, 5):
+                pygame.draw.rect(self._display_surface, cell["background_colour"], cell["rect"])
                 pygame.draw.rect(self._display_surface, self.colours["letter_absent"], cell["rect"], 2)
                 if cell["content"] != " ":
                     letter = cell["content"]
@@ -170,7 +193,13 @@ class Game():
                     letter_text_rect.center = ((cell["rect"][0] + (self.cell_size / 2)),
                                                (cell["rect"][1] + (self.cell_size / 2)) - 5)
                     self._display_surface.blit(letter_text, letter_text_rect)
-                    
+       
+        if self.won:
+            self._display_surface.blit(self.won_text, self.won_text_rect)
+            
+        if self.lost:
+            self._display_surface.blit(self.lost_text, self.lost_text_rect)
+                 
         # self._display_surface.blit(self.test_text, self.text_text_rect)
         
         pygame.display.update()  
@@ -179,14 +208,13 @@ class Game():
         """ Handles events """
         if event.type == pygame.QUIT:
             self.quit()
-        elif event.type == pygame.KEYDOWN:
+        elif event.type == pygame.KEYDOWN and not self.won:
             # Enter : 13
             # Backspace : 8
 
             try:
                 character = chr(event.key).upper()
                 if character in ascii_uppercase:
-                    
                     self.input_character(character)
             except ValueError:
                 pass
@@ -195,8 +223,10 @@ class Game():
                 self.on_enter_press()
             elif event.key == 8:
                 self.on_backspace_press()
-
+                
+        self.update_cell_colours()
         self.logic()
+
     
     def logic(self) -> None:
         """ Controls the game logic """
@@ -204,7 +234,7 @@ class Game():
             number_of_words = len(self.all_answer_words)
             random_number = randint(0, number_of_words)
             self.chosen_word = self.all_answer_words[random_number]
-            print(self.chosen_word)
+            print(f"chosen word: '{self.chosen_word}'")
 
         for row in islice(self.cells, self.current_row, len(self.cells)):
             if row[5] == True:
@@ -215,10 +245,10 @@ class Game():
             return True
         return False    
     
-    def find_row_word(self) -> str:
+    def find_row_word(self, row_to_check) -> str:
         row_word = ""
         for row in self.cells:
-            if self.cells.index(row) == self.current_row:
+            if self.cells.index(row) == row_to_check:
                 for cell in islice(row, 5):
                     row_word += cell["content"]
 
@@ -229,18 +259,42 @@ class Game():
         for row in self.cells:
             for cell in islice(row, 5):
                 if cell["id"] == cell_id_to_insert_letter and int(cell["id"][0]) == self.current_row:
-                        cell["content"] = character
+                    cell["content"] = character
     
     def on_enter_press(self) -> None:
-        if self.cells[self.current_row][4]["content"] != " ":
-            current_row_word = self.find_row_word()
+        try:
+            if self.cells[self.current_row][4]["content"] != " ":
+                current_row_word = self.find_row_word(self.current_row).lower()
+                if current_row_word.upper() in self.all_words:
+                    self.cells[self.current_row][5] = True
+                    for cell in islice(self.cells[self.current_row], 5):
+                        letter = cell["content"].lower()
+                        if letter in self.chosen_word:
+                            if self.chosen_word.index(letter) == current_row_word.index(letter):
+                                # print("green:", cell["id"][1])
+                                cell["state"] = 3
+                            else:
+                                # print("yellow:", cell["id"][1])
+                                cell["state"] = 2
+                        else:
+                            # print("gray:", cell["id"][1])     
+                            cell["state"] = 1  
+        except IndexError:
+            pass   
+    
+    def check_win(self) -> None:
+        if self.find_row_word(self.current_row - 1).upper() == self.chosen_word.upper():
+            if self.cells[self.current_row - 1][5] == True:
+                self.won = True
+        if self.cells[5][5] == True and self.won == False:
+            self.lost = True
 
-                        
-            self.cells[self.current_row][5] = True
-            
     def on_backspace_press(self) -> None:
         first_empty_cell = self.search_for_first_empty_cell()
-        recent_cell = str(first_empty_cell[0] + str((int(first_empty_cell[1]) - 1 )))
+        try:
+            recent_cell = str(first_empty_cell[0] + str((int(first_empty_cell[1]) - 1 )))
+        except IndexError:
+            recent_cell = "54"
         if len(recent_cell) > 2:
             new_cell = str(int(recent_cell[0]) - 1) + "4"
             recent_cell = new_cell
@@ -258,6 +312,19 @@ class Game():
         else:
             return ""
 
+    def update_cell_colours(self) -> None:
+        for row in self.cells:
+            for cell in islice(row, 5):
+                match cell["state"]:
+                    case 0:
+                        cell["background_colour"] = self.colours["letter_unused"]
+                    case 1:
+                        cell["background_colour"] = self.colours["letter_absent"]
+                    case 2:
+                        cell["background_colour"] = self.colours["letter_present"]
+                    case 3:
+                        cell["background_colour"] = self.colours["letter_correct"]
+    
     
     def quit(self) -> None:
         """ Exits pygame, then the program """
