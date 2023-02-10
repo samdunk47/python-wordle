@@ -33,10 +33,6 @@ class Game():
         self.FPS = 60
         self.fonts = {
             "bold": pygame.font.Font("python-wordle\\game\\assets\\ClearSans-Bold.ttf", 75),
-            "thin": pygame.font.Font("python-wordle\\game\\assets\\ClearSans-Thin.ttf", 75),
-            "light": pygame.font.Font("python-wordle\\game\\assets\\ClearSans-Light.ttf", 75),
-            "medium": pygame.font.Font("python-wordle\\game\\assets\\ClearSans-Medium.ttf", 75),
-            "regular": pygame.font.Font("python-wordle\\game\\assets\\ClearSans-Regular.ttf", 75),
             "large": pygame.font.Font("python-wordle\\game\\assets\\ClearSans-Bold.ttf", 150),
         } # all fonts
         
@@ -99,7 +95,7 @@ class Game():
 
     def add_words(self) -> None:
         """ Add words to an array of words, stores in instance of class """        
-        words_file = open("python-wordle\\game\\assets\\five_letter_words.txt", "r")
+        words_file = open("python-wordle\\game\\assets\\words.txt", "r")
         all_words_with_newlines = words_file.readlines()
         all_words = []
         for word in all_words_with_newlines:
@@ -331,21 +327,21 @@ class Game():
         pygame.quit()
         sys.exit(0)
 
-    def filter_words_func(self):
-        all_words_file = open("python-wordle\\game\\assets\\words.txt", "r")
-        five_letter_words_file = open("python-wordle\\game\\assets\\five_letter_words.txt", "w")
-        all_words = all_words_file.readlines()
-        for word in all_words:
-            valid = True
-            index = 0
-            for letter in word:
-                if not str(letter) in ascii_letters and index < 5:
-                    valid = False
-                index += 1
-            if len(word) == 6 and valid:
-                five_letter_words_file.write(word.upper())
-        all_words_file.close()
-        five_letter_words_file.close()
+    # def filter_words_func(self):
+    #     all_words_file = open("python-wordle\\game\\assets\\words.txt", "r")
+    #     five_letter_words_file = open("python-wordle\\game\\assets\\five_letter_words.txt", "w")
+    #     all_words = all_words_file.readlines()
+    #     for word in all_words:
+    #         valid = True
+    #         index = 0
+    #         for letter in word:
+    #             if not str(letter) in ascii_letters and index < 5:
+    #                 valid = False
+    #             index += 1
+    #         if len(word) == 6 and valid:
+    #             five_letter_words_file.write(word.upper())
+    #     all_words_file.close()
+    #     five_letter_words_file.close()
 
 if __name__ == "__main__":
     game = Game()
