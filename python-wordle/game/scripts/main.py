@@ -1,6 +1,6 @@
 import pygame
 import sys
-import itertools
+from itertools import islice
 from random import randint
 from pprint import pprint
 
@@ -82,9 +82,8 @@ class Game():
         self.initialise_letters()
         
         self.logic()
-        
         self.execute()
-        
+
     def add_words(self) -> None:
         """ Add words to an array of words, stores in instance of class """        
         words_file = open("python-wordle\\game\\assets\\five_letter_words.txt", "r")
@@ -92,8 +91,6 @@ class Game():
         
         answer_words_file = open("python-wordle\\game\\assets\\answer_words.txt", "r")
         self.all_answer_words = answer_words_file.readlines()
-        
-    
         
     def initialise_letters(self) -> None:
         letters = {}
@@ -164,7 +161,7 @@ class Game():
         pygame.draw.line(self._display_surface, self.colours["text"], (0, self.cell_size + 15), (self.window_width, self.cell_size + 15), 1)
         
         for row in self.cells:
-            for cell in itertools.islice(row, 5):
+            for cell in islice(row, 5):
                 pygame.draw.rect(self._display_surface, self.colours["letter_absent"], cell["rect"], 2)
                 if cell["content"] != " ":
                     letter = cell["content"]
@@ -178,6 +175,29 @@ class Game():
         
         pygame.display.update()  
         
+    def on_event(self, event) -> None:
+        """ Handles events """
+        if event.type == pygame.QUIT:
+            self.quit()
+        elif event.type == pygame.KEYDOWN:
+            # Enter : 13
+            # Backspace : 8
+
+            try:
+                character = chr(event.key).upper()
+                if character in ascii_uppercase:
+                    
+                    self.input_character(character)
+            except ValueError:
+                pass
+            
+            if event.key == 13:
+                self.on_enter_press()
+            elif event.key == 8:
+                self.on_backspace_press()
+
+        self.logic()
+    
     def logic(self) -> None:
         """ Controls the game logic """
         if self.chosen_word == "":
@@ -185,58 +205,59 @@ class Game():
             random_number = randint(0, number_of_words)
             self.chosen_word = self.all_answer_words[random_number]
             print(self.chosen_word)
-            
-        
-        
-        for row in itertools.islice(self.cells, self.current_row, len(self.cells)):
+
+        for row in islice(self.cells, self.current_row, len(self.cells)):
             if row[5] == True:
                 self.current_row += 1
         
+    def check_valid_word(self, word) -> bool:
+        if word in self.all_words:
+            return True
+        return False    
+    
+    def find_row_word(self) -> str:
+        row_word = ""
+        for row in self.cells:
+            if self.cells.index(row) == self.current_row:
+                for cell in islice(row, 5):
+                    row_word += cell["content"]
+
+        return row_word
+    
+    def input_character(self, character) -> None:
+        cell_id_to_insert_letter = self.search_for_first_empty_cell()
+        for row in self.cells:
+            for cell in islice(row, 5):
+                if cell["id"] == cell_id_to_insert_letter and int(cell["id"][0]) == self.current_row:
+                        cell["content"] = character
+    
+    def on_enter_press(self) -> None:
+        if self.cells[self.current_row][4]["content"] != " ":
+            current_row_word = self.find_row_word()
+
+                        
+            self.cells[self.current_row][5] = True
+            
+    def on_backspace_press(self) -> None:
+        first_empty_cell = self.search_for_first_empty_cell()
+        recent_cell = str(first_empty_cell[0] + str((int(first_empty_cell[1]) - 1 )))
+        if len(recent_cell) > 2:
+            new_cell = str(int(recent_cell[0]) - 1) + "4"
+            recent_cell = new_cell
+            
+        for row in self.cells:
+            for cell in islice(row, 5):
+                if cell["id"] == recent_cell and recent_cell[0] == str(self.current_row):
+                    cell["content"] = " "
         
-    def on_event(self, event) -> None:
-        """ Handles events """
-        if event.type == pygame.QUIT:
-            self.quit()
-        if event.type == pygame.KEYDOWN:
-            # Enter : 13
-            # Backspace : 8
-
-            try:
-                character = chr(event.key).upper()
-                if character in ascii_uppercase:
-                    cell_id_to_insert_letter = self.search_for_first_empty_cell()
-                    for row in self.cells:
-                        for cell in itertools.islice(row, 5):
-                            if cell["id"] == cell_id_to_insert_letter and \
-                                int(cell["id"][0]) == self.current_row:
-                                    cell["content"] = character
-                                    
-            except ValueError as error:
-                pass
-            if event.key == 13 and self.cells[self.current_row][4]["content"] != " ":
-                self.cells[self.current_row][5] = True
-            if event.key == 8:
-                first_empty_cell = self.search_for_first_empty_cell()
-                recent_cell = str(first_empty_cell[0] + str((int(first_empty_cell[1]) - 1 )))
-                if len(recent_cell) > 2:
-                    new_cell = str(int(recent_cell[0]) - 1) + "4"
-                    recent_cell = new_cell
-                    
-                for row in self.cells:
-                    for cell in itertools.islice(row, 5):
-                        if cell["id"] == recent_cell and recent_cell[0] == str(self.current_row):
-                            cell["content"] = " "
-                            
-                            
-
-        self.logic()
-
     def search_for_first_empty_cell(self) -> str:
         for row in self.cells:
-            for cell in itertools.islice(row, 5):
+            for cell in islice(row, 5):
                 if cell["content"] == " ":
                     return cell["id"]
-        return ""
+        else:
+            return ""
+
     
     def quit(self) -> None:
         """ Exits pygame, then the program """
