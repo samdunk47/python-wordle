@@ -33,7 +33,8 @@ class Game():
         self.FPS = 60
         self.fonts = {
             "bold": pygame.font.Font("python-wordle\\game\\assets\\ClearSans-Bold.ttf", 75),
-            "large": pygame.font.Font("python-wordle\\game\\assets\\ClearSans-Bold.ttf", 150),
+            "small": pygame.font.Font("python-wordle\\game\\assets\\ClearSans-Bold.ttf", 20),
+            "large": pygame.font.Font("python-wordle\\game\\assets\\ClearSans-Bold.ttf", 125),
         } # all fonts
         
         self.colours = {
@@ -47,7 +48,7 @@ class Game():
             
             "letter_border": "#3a3a3c",
 
-            "keyboard_background": "#818384",
+            "keyboard_unused": "#818384",
             "keyboard_correct": "#538d4e",
             "keyboard_present": "#b59f3b",
             "keyboard_absent": "#3a3a3c",
@@ -73,16 +74,19 @@ class Game():
         self.title_text_rect = self.title_text.get_rect()
         self.title_text_rect.center = (self.window_width // 2, 40)
         
-        self.won_text = self.fonts["large"].render("You won!", True, self.colours["letter_correct"])
+        self.won_text = self.fonts["large"].render("You won!", True, self.colours["text"])
         self.won_text_rect = self.won_text.get_rect()
-        self.won_text_rect.center = (self.window_width // 2, 675)
+        self.won_text_rect.center = (self.window_width // 2, 650)
         
         self.lost_text = self.fonts["large"].render("You lost!", True, self.colours["text"])
         self.lost_text_rect = self.lost_text.get_rect()
-        self.lost_text_rect.center = (self.window_width // 2, 675)
+        self.lost_text_rect.center = (self.window_width // 2, 650)
         
-        self.keyboard_letters = {}
+        self.play_again_text = self.fonts["bold"].render("Play again", True, self.colours["text"])
+        self.play_again_text_rect = self.play_again_text.get_rect()
         
+        self.keyboard_letters = []
+            
         self.running = True
         
         self.add_words()
@@ -110,14 +114,9 @@ class Game():
         self.all_answer_words = all_answer_words
         
     def initialise_letters(self) -> None:
-        letters = {}
+        letters = []
         for letter in ascii_uppercase:
-            letter_text = self.fonts["bold"].render(letter, True, self.colours["text"])
-            letter_text_rect = letter_text.get_rect()
-            letters[letter] = [
-                self.fonts["bold"].render(letter, True, self.colours["text"]), 
-                letter_text_rect
-                ]
+            letters.append({letter : 0})
         self.letters = letters
     
     def create_keyboard_letters(self) -> None:
@@ -129,8 +128,32 @@ class Game():
         3: correct
         """
         for letter in ascii_uppercase:
-            self.keyboard_letters[letter] = 0
+            self.keyboard_letters.append(
+                {"letter": letter, "state": 0, "background_colour": self.colours["keyboard_unused"], "rect": None}
+            )
         
+        width = 40
+        height = 50
+        width_gap = 10
+        height_gap = 10
+        
+        for key, letter in enumerate(islice(self.keyboard_letters, 0, 9)):
+            x_cor = 176.25 + (key * width) + (key * width_gap)
+            y_cor = 620
+            self.keyboard_letters[key]["rect"] = pygame.Rect(x_cor, y_cor, width, height)
+            
+        for key, letter in enumerate(islice(self.keyboard_letters, 9, 18)):
+            x_cor = 176.25 + (key * width) + (key * width_gap)
+            y_cor = 670 + height_gap
+            key += 9
+            self.keyboard_letters[key]["rect"] = pygame.Rect(x_cor, y_cor, width, height)
+            
+        for key, letter in enumerate(islice(self.keyboard_letters, 18, 26)):
+            x_cor = 201.25 + (key * width) + (key * width_gap)
+            y_cor = 720 + (height_gap * 2)
+            key += 18
+            self.keyboard_letters[key]["rect"] = pygame.Rect(x_cor, y_cor, width, height)
+
     def create_cells(self) -> None:
         """ Creates data dictionary of all cells in the game """    
 
@@ -189,9 +212,20 @@ class Game():
                     letter_text_rect.center = ((cell["rect"][0] + (self.cell_size / 2)),
                                                (cell["rect"][1] + (self.cell_size / 2)) - 5)
                     self._display_surface.blit(letter_text, letter_text_rect)
-       
+
+        if not self.won and not self.lost:
+            for letter in self.keyboard_letters:
+                pygame.draw.rect(self._display_surface, letter["background_colour"], letter["rect"], border_radius=2)
+                letter_text = self.fonts["small"].render(letter["letter"], True, self.colours["text"])
+                letter_text_rect = letter_text.get_rect()
+                letter_text_rect.center = ((letter["rect"][0] + 20),
+                                            (letter["rect"][1] + 25) - 2.5)
+                self._display_surface.blit(letter_text, letter_text_rect)
+        
         if self.won:
+            # pygame.draw.rect(self._display_surface, "#999999", pygame.Rect(self.won_text_rect[0] - 25, self.won_text_rect[1] + 25, self.won_text_rect[2] + 50, self.won_text_rect[3] - 25), 10)
             self._display_surface.blit(self.won_text, self.won_text_rect)
+            
             
         if self.lost:
             self._display_surface.blit(self.lost_text, self.lost_text_rect)
@@ -263,20 +297,35 @@ class Game():
                 current_row_word = self.find_row_word(self.current_row).lower()
                 if current_row_word.upper() in self.all_words:
                     self.cells[self.current_row][5] = True
+                    
                     for cell in islice(self.cells[self.current_row], 5):
                         letter = cell["content"].lower()
                         if letter in self.chosen_word:
                             if self.chosen_word.index(letter) == current_row_word.index(letter):
-                                # print("green:", cell["id"][1])
-                                cell["state"] = 3
+                                self.letters[letter]["state"] = 3
                             else:
-                                # print("yellow:", cell["id"][1])
-                                cell["state"] = 2
+                                self.letters[letter]["state"] = 2
                         else:
-                            # print("gray:", cell["id"][1])     
-                            cell["state"] = 1  
+                            self.letters[letter]["state"] = 1
+                    
+                    # for keyboard_letter in self.keyboard_letters:
+                    #     letter = keyboard_letter["letter"].lower()
+                    #     print(letter)
+                    #     if letter in self.chosen_word:
+                    #         if self.chosen_word.index(letter) == current_row_word.index(letter):
+                    #             keyboard_letter["state"] = 3
+                    #         else:
+                    #             keyboard_letter["state"] = 2
+                    #     else:
+                    #         keyboard_letter["state"] = 1
+                     
         except IndexError:
             pass   
+    
+    def update_state_values(self) -> None:
+        for row in self.cells:
+            for cell in islice(row, 5):
+                cell["state"] = 
     
     def check_win(self) -> None:
         if self.find_row_word(self.current_row - 1).upper() == self.chosen_word.upper():
@@ -320,6 +369,17 @@ class Game():
                         cell["background_colour"] = self.colours["letter_present"]
                     case 3:
                         cell["background_colour"] = self.colours["letter_correct"]
+                        
+        for letter in self.keyboard_letters:
+            match letter["state"]:
+                case 0:
+                    letter["background_colour"] = self.colours["keyboard_unused"]
+                case 1:
+                    letter["background_colour"] = self.colours["keyboard_absent"]
+                case 2:
+                    letter["background_colour"] = self.colours["keyboard_present"]
+                case 3:
+                    letter["background_colour"] = self.colours["keyboard_correct"]
     
     
     def quit(self) -> None:
