@@ -114,9 +114,9 @@ class Game():
         self.all_answer_words = all_answer_words
         
     def initialise_letters(self) -> None:
-        letters = []
+        letters = {}
         for letter in ascii_uppercase:
-            letters.append({letter : 0})
+            letters[letter] = 0
         self.letters = letters
     
     def create_keyboard_letters(self) -> None:
@@ -188,7 +188,7 @@ class Game():
         while self.running:
             for event in pygame.event.get():
                 self.on_event(event)
-                    
+                
             self.render()
             self.check_win()
             self.fps_clock.tick(self.FPS)
@@ -200,18 +200,19 @@ class Game():
         self._display_surface.blit(self.title_text, self.title_text_rect)
         
         pygame.draw.line(self._display_surface, self.colours["text"], (0, self.cell_size + 15), (self.window_width, self.cell_size + 15), 1)
+    
         
         for row in self.cells:
             for cell in islice(row, 5):
-                pygame.draw.rect(self._display_surface, cell["background_colour"], cell["rect"])
-                pygame.draw.rect(self._display_surface, self.colours["letter_absent"], cell["rect"], 2)
-                if cell["content"] != " ":
-                    letter = cell["content"]
-                    letter_text = self.fonts["bold"].render(letter, True, self.colours["text"])
-                    letter_text_rect = letter_text.get_rect()
-                    letter_text_rect.center = ((cell["rect"][0] + (self.cell_size / 2)),
-                                               (cell["rect"][1] + (self.cell_size / 2)) - 5)
-                    self._display_surface.blit(letter_text, letter_text_rect)
+                    pygame.draw.rect(self._display_surface, cell["background_colour"], cell["rect"])
+                    pygame.draw.rect(self._display_surface, self.colours["letter_absent"], cell["rect"], 2)
+                    if cell["content"] != " ":
+                        letter = cell["content"]
+                        letter_text = self.fonts["bold"].render(letter, True, self.colours["text"])
+                        letter_text_rect = letter_text.get_rect()
+                        letter_text_rect.center = ((cell["rect"][0] + (self.cell_size / 2)),
+                                                (cell["rect"][1] + (self.cell_size / 2)) - 5)
+                        self._display_surface.blit(letter_text, letter_text_rect)
 
         if not self.won and not self.lost:
             for letter in self.keyboard_letters:
@@ -299,15 +300,18 @@ class Game():
                     self.cells[self.current_row][5] = True
                     
                     for cell in islice(self.cells[self.current_row], 5):
-                        letter = cell["content"].lower()
-                        if letter in self.chosen_word:
-                            if self.chosen_word.index(letter) == current_row_word.index(letter):
-                                self.letters[letter]["state"] = 3
+                        if cell["content"] != " ":
+                            letter = cell["content"].lower()
+                            if letter in self.chosen_word:
+                                if self.chosen_word.index(letter) == current_row_word.index(letter):
+                                    self.letters[letter.upper()] = 3
+                                else:
+                                    self.letters[letter.upper()] = 2
                             else:
-                                self.letters[letter]["state"] = 2
-                        else:
-                            self.letters[letter]["state"] = 1
-                    
+                                self.letters[letter.upper()] = 1
+                                
+                self.update_state_values()
+                
                     # for keyboard_letter in self.keyboard_letters:
                     #     letter = keyboard_letter["letter"].lower()
                     #     print(letter)
@@ -325,7 +329,11 @@ class Game():
     def update_state_values(self) -> None:
         for row in self.cells:
             for cell in islice(row, 5):
-                cell["state"] = 
+                if cell["content"] != " ":
+                    cell["state"] = self.letters[cell["content"]]
+        
+        for letter in self.keyboard_letters:
+            letter["state"] = self.letters[letter["letter"]]
     
     def check_win(self) -> None:
         if self.find_row_word(self.current_row - 1).upper() == self.chosen_word.upper():
