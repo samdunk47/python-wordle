@@ -8,7 +8,7 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "program": "python-wordle\\game\\scripts\\main.py",
+            "program": "C:\\Users\\Sam\\Documents\\python-wordle\\app.py",
             "console": "integratedTerminal",
             "justMyCode": true 
         }
