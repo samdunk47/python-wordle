@@ -31,9 +31,9 @@ class Game():
         self.fps_clock = pygame.time.Clock()
         self.FPS = 60
         self.fonts = {
-            "bold": pygame.font.Font("C:\\Users\\Sam\\Documents\\python-wordle\\assets\\ClearSans-Bold.ttf", 75),
-            "small": pygame.font.Font("C:\\Users\\Sam\\Documents\\python-wordle\\assets\\ClearSans-Bold.ttf", 20),
-            "large": pygame.font.Font("C:\\Users\\Sam\\Documents\\python-wordle\\assets\\ClearSans-Bold.ttf", 125),
+            "bold": pygame.font.Font("assets\\ClearSans-Bold.ttf", 75),
+            "small": pygame.font.Font("assets\\ClearSans-Bold.ttf", 20),
+            "large": pygame.font.Font("assets\\ClearSans-Bold.ttf", 125),
         } # all fonts
         
         self.colours = {
@@ -98,14 +98,14 @@ class Game():
 
     def add_words(self) -> None:
         """ Add words to an array of words, stores in instance of class """        
-        words_file = open("C:\\Users\\Sam\\Documents\\python-wordle\\assets\\words.txt", "r")
+        words_file = open("assets\\words.txt", "r")
         all_words_with_newlines = words_file.readlines()
         all_words = []
         for word in all_words_with_newlines:
             all_words.append(word.replace("\n", ""))
         self.all_words = all_words
 
-        answer_words_file = open("C:\\Users\\Sam\\Documents\\python-wordle\\assets\\answer_words.txt", "r")
+        answer_words_file = open("assets\\answer_words.txt", "r")
         all_answer_words_with_newlines = answer_words_file.readlines()
         all_answer_words = []
         for word in all_answer_words_with_newlines:
