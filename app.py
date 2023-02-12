@@ -2,7 +2,6 @@ import pygame
 import sys
 from itertools import islice
 from random import randint
-from pprint import pprint
 
 from string import ascii_uppercase, ascii_letters
 
@@ -32,9 +31,9 @@ class Game():
         self.fps_clock = pygame.time.Clock()
         self.FPS = 60
         self.fonts = {
-            "bold": pygame.font.Font("python-wordle\\game\\assets\\ClearSans-Bold.ttf", 75),
-            "small": pygame.font.Font("python-wordle\\game\\assets\\ClearSans-Bold.ttf", 20),
-            "large": pygame.font.Font("python-wordle\\game\\assets\\ClearSans-Bold.ttf", 125),
+            "bold": pygame.font.Font("C:\\Users\\Sam\\Documents\\python-wordle\\assets\\ClearSans-Bold.ttf", 75),
+            "small": pygame.font.Font("C:\\Users\\Sam\\Documents\\python-wordle\\assets\\ClearSans-Bold.ttf", 20),
+            "large": pygame.font.Font("C:\\Users\\Sam\\Documents\\python-wordle\\assets\\ClearSans-Bold.ttf", 125),
         } # all fonts
         
         self.colours = {
@@ -92,29 +91,33 @@ class Game():
         self.add_words()
         self.create_keyboard_letters()
         self.create_cells()
-        self.initialise_letters()
+        # self.initialise_letters()
         
         self.logic()
         self.execute()
 
     def add_words(self) -> None:
         """ Add words to an array of words, stores in instance of class """        
-        words_file = open("python-wordle\\game\\assets\\words.txt", "r")
+        words_file = open("C:\\Users\\Sam\\Documents\\python-wordle\\assets\\words.txt", "r")
         all_words_with_newlines = words_file.readlines()
         all_words = []
         for word in all_words_with_newlines:
             all_words.append(word.replace("\n", ""))
         self.all_words = all_words
 
-        answer_words_file = open("python-wordle\\game\\assets\\answer_words.txt", "r")
+        answer_words_file = open("C:\\Users\\Sam\\Documents\\python-wordle\\assets\\answer_words.txt", "r")
         all_answer_words_with_newlines = answer_words_file.readlines()
         all_answer_words = []
         for word in all_answer_words_with_newlines:
             all_answer_words.append(word.replace("\n", ""))
         self.all_answer_words = all_answer_words
         
-    def initialise_letters(self) -> None:
-        letters = {}
+    # def initialise_letters(self) -> None:
+    #     letters = {}
+    #     for letter in ascii_uppercase:
+    #         letters[letter] = 0
+    #     for letter, state in letters.items():
+    #         print(letter, state)
         
     
     def create_keyboard_letters(self) -> None:
@@ -262,7 +265,7 @@ class Game():
             number_of_words = len(self.all_answer_words)
             random_number = randint(0, number_of_words)
             self.chosen_word = self.all_answer_words[random_number]
-            print(f"chosen word: '{self.chosen_word}'")
+            # print(f"chosen word: '{self.chosen_word}'")
 
         for row in islice(self.cells, self.current_row, len(self.cells)):
             if row[5] == True:
@@ -305,9 +308,11 @@ class Game():
                                 cell["state"] = 2
                         else:
                             cell["state"] = 1
+                            
+                    self.update_keyboard_letters()
                     
-                    for keyboard_letter in self.keyboard_letters:
-                        letter = keyboard_letter["letter"].lower()
+                    # for keyboard_letter in self.keyboard_letters:
+                    #     letter = keyboard_letter["letter"].lower()
                         
                         # if letter in self.chosen_word:
                         #     if self.chosen_word.index(letter) == current_row_word.index(letter):
@@ -320,6 +325,32 @@ class Game():
         except IndexError:
             pass   
     
+    def update_keyboard_letters(self) -> None:
+        answer_word = self.chosen_word.lower()
+        all_row_words = []
+        
+        for row in self.cells:
+            current_row_word = ""
+            
+            for cell in islice(row, 5):
+                letter = cell["content"].lower()
+                current_row_word += letter
+                
+            all_row_words.append(current_row_word)
+            
+        for keyboard_letter in self.keyboard_letters:
+            letter = keyboard_letter["letter"]
+            for word in all_row_words:
+                for letter in word:
+                    if keyboard_letter["letter"].lower() == letter:
+                        if letter in answer_word:
+                            if answer_word.index(letter) == word.index(letter) and keyboard_letter["state"] < 3:
+                                keyboard_letter["state"] = 3
+                            elif keyboard_letter["state"] < 2:
+                                keyboard_letter["state"] = 2
+                        elif keyboard_letter["state"] < 1:
+                            keyboard_letter["state"] = 1
+
     def check_win(self) -> None:
         if self.find_row_word(self.current_row - 1).upper() == self.chosen_word.upper():
             if self.cells[self.current_row - 1][5] == True:
